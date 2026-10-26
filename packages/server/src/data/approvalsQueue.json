@@ -1,0 +1,46 @@
+[
+  {
+    "id": "appr-001",
+    "name": "Site Patrol Onboarding & Checklists",
+    "type": "Folder",
+    "submittedBy": "Sam HelpAdmin",
+    "date": "Sep 18",
+    "status": "Pending Review — Sep 18",
+    "description": "Standard operating procedures, emergency drill protocols, and site technician check-in checklists.",
+    "urgent": false,
+    "category": "Documentation"
+  },
+  {
+    "id": "appr-002",
+    "name": "Level 2 Drone Patrol Video Demo",
+    "type": "Video",
+    "submittedBy": "Alex HelpAdmin",
+    "date": "Sep 18",
+    "status": "Pending Review — Sep 18",
+    "description": "Drawing Videos - Drawing Videos Card showing drone perimeter sweeps, altitude compliance, and obstacle avoidance telemetry.",
+    "urgent": true,
+    "category": "Surveillance"
+  },
+  {
+    "id": "appr-003",
+    "name": "Safety Equipment & Sensor Specs",
+    "type": "PDF",
+    "submittedBy": "Sam HelpAdmin",
+    "date": "Sep 18",
+    "status": "Pending Review — Sep 18",
+    "description": "IoT vibration and thermal sensor specifications, calibration thresholds, and hazardous zone battery backup documentation.",
+    "urgent": true,
+    "category": "Hardware"
+  },
+  {
+    "id": "appr-004",
+    "name": "360° Spatial Zone Layout & Camera Map",
+    "type": "Image",
+    "submittedBy": "Elena HelpAdmin",
+    "date": "Sep 18",
+    "status": "Pending Review — Sep 18",
+    "description": "Site Recordings - Site Recordings layout showing camera blind spot coverage and spatial coordinate overlays.",
+    "urgent": false,
+    "category": "Spatial Mapping"
+  }
+]
