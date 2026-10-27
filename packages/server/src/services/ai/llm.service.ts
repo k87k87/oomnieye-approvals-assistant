@@ -160,8 +160,7 @@ export class LlmService {
     const fallbackSummary = (reason: string): StructuredSummary => {
       const urgentItems = items.filter((i) => i.urgent || i.type === "Video" || i.type === "PDF");
       return {
-        overview:
-          "Operational Queue Synthesis (Deterministic Rule-Based Fallback): 4 pending items cataloged.",
+        overview: `Operational Queue Synthesis (Deterministic Rule-Based Fallback): ${items.length} pending items cataloged.`,
         totalPending: items.length,
         highPriorityCount: urgentItems.length,
         prioritizedItems: items.map((i) => ({
@@ -189,7 +188,9 @@ export class LlmService {
                 : "Verify metadata and perform checklist sign-off.",
         })),
         topRecommendation:
-          "Execute immediate review of 'Level 2 Drone Patrol Video Demo' to prevent flight log expiry.",
+          urgentItems.length > 0
+            ? `Execute immediate review of '${urgentItems[0]?.name}' to prevent operational delay.`
+            : "Review pending onboarding checklists.",
         degraded: true,
         fallbackReason: reason,
         generatedAt: new Date().toISOString(),

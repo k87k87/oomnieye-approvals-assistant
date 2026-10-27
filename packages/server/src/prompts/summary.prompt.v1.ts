@@ -30,7 +30,8 @@ CRITICAL REQUIREMENTS:
 }
 
 Prioritization Rules:
-- Drone flight videos ("Level 2 Drone Patrol Video Demo") and safety hardware specs ("Safety Equipment & Sensor Specs") are HIGH urgency due to physical perimeter safety and hazard compliance.
+- Only consider, prioritize, and count items that are actively PENDING review. Completely exclude any item that is already "Completed", "Approved", or "Rejected" from totalPending and prioritizedItems.
+- Drone flight videos ("Level 2 Drone Patrol Video Demo") and safety hardware specs ("Safety Equipment & Sensor Specs") are HIGH urgency due to physical perimeter safety and hazard compliance if pending.
 - Spatial zone camera maps ("360° Spatial Zone Layout & Camera Map") are MEDIUM urgency (needed for shift transitions).
 - Onboarding & general checklists ("Site Patrol Onboarding & Checklists") are LOW/MEDIUM urgency.
 

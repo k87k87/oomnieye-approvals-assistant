@@ -62,6 +62,15 @@ export default function ApprovalsPage() {
     );
   }, [items, searchQuery]);
 
+  const pendingCount = useMemo(() => {
+    return items.filter(
+      (item) =>
+        !item.status.toLowerCase().includes("completed") &&
+        !item.status.toLowerCase().includes("approved") &&
+        !item.status.toLowerCase().includes("rejected"),
+    ).length;
+  }, [items]);
+
   const selectedItem = useMemo(() => {
     return items.find((i) => i.id === selectedItemId) || null;
   }, [items, selectedItemId]);
@@ -75,7 +84,7 @@ export default function ApprovalsPage() {
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-5 flex flex-col">
         {/* Approvals Header with Actions & Search */}
         <ApprovalsHeader
-          totalItems={items.length}
+          totalItems={pendingCount}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           activeViewMode={viewMode}

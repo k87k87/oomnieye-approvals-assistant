@@ -16,7 +16,7 @@ export class ApiClient {
    * Fetch pending approval queue items
    */
   public static async getApprovals(): Promise<ApprovalQueueResponse> {
-    const res = await fetch(`${API_BASE}/approvals`);
+    const res = await fetch(`${API_BASE}/approvals`, { cache: "no-store" });
     if (!res.ok) {
       throw new Error(`Failed to fetch approvals queue (${res.status})`);
     }

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "../../src/app";
+import { approvalService } from "../../src/services/approval/approval.service";
 
 describe("Integration Tests (Supertest): AI Assistant Endpoints & Fallback Resilience", () => {
   it("GET /api/approvals should return 200 with seeded queue items", async () => {
@@ -17,7 +18,7 @@ describe("Integration Tests (Supertest): AI Assistant Endpoints & Fallback Resil
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.greeting).toBeDefined();
-    expect(res.body.data.pendingCount).toBe(4);
+    expect(res.body.data.pendingCount).toBe(approvalService.getPendingItems().length);
   });
 
   it("POST /api/assistant/summary (Success Path) should return 200 with Zod-validated structured JSON", async () => {
@@ -28,7 +29,7 @@ describe("Integration Tests (Supertest): AI Assistant Endpoints & Fallback Resil
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.totalPending).toBe(4);
+    expect(res.body.data.totalPending).toBe(approvalService.getPendingItems().length);
     expect(res.body.data.highPriorityCount).toBeGreaterThanOrEqual(1);
     expect(Array.isArray(res.body.data.prioritizedItems)).toBe(true);
     expect(res.body.data.topRecommendation).toBeDefined();

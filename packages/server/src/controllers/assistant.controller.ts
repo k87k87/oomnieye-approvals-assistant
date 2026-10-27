@@ -9,14 +9,14 @@ export class AssistantController {
    */
   public async getGreeting(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const items = approvalService.getItems();
-      const result = await llmService.generateGreeting(items);
+      const pendingItems = approvalService.getPendingItems();
+      const result = await llmService.generateGreeting(pendingItems);
 
       const response = GreetingResponseSchema.parse({
         success: true,
         data: {
           greeting: result.greeting,
-          pendingCount: items.length,
+          pendingCount: pendingItems.length,
           degraded: result.degraded,
         },
       });
@@ -33,8 +33,8 @@ export class AssistantController {
   public async getSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const language = (req.body?.language as string) || "en";
-      const items = approvalService.getItems();
-      const summary = await llmService.generateSummary(items, language);
+      const pendingItems = approvalService.getPendingItems();
+      const summary = await llmService.generateSummary(pendingItems, language);
 
       const response = SummaryResponseSchema.parse({
         success: true,
@@ -54,11 +54,11 @@ export class AssistantController {
     try {
       const payload = req.body as ChatRequest;
       const { action, message, history, language } = payload;
-      const items = approvalService.getItems();
+      const pendingItems = approvalService.getPendingItems();
 
       switch (action) {
         case "talk":
-          await llmService.streamTalk(items, history || [], message || "", res, language);
+          await llmService.streamTalk(pendingItems, history || [], message || "", res, language);
           break;
 
         case "help":

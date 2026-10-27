@@ -11,6 +11,7 @@ export class ApprovalsController {
         count: items.length,
         items,
       });
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.json(response);
     } catch (err) {
       next(err);

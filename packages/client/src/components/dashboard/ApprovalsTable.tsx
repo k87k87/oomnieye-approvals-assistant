@@ -96,8 +96,23 @@ export const ApprovalsTable: React.FC<ApprovalsTableProps> = ({
 
                   {/* Status Badge */}
                   <td className="py-3.5 px-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                      Pending Review
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                        item.status.toLowerCase().includes("completed") ||
+                        item.status.toLowerCase().includes("approved")
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : item.status.toLowerCase().includes("rejected")
+                            ? "bg-rose-50 text-rose-700 border-rose-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                      }`}
+                    >
+                      {item.status.toLowerCase().includes("completed")
+                        ? "Completed"
+                        : item.status.toLowerCase().includes("approved")
+                          ? "Approved"
+                          : item.status.toLowerCase().includes("rejected")
+                            ? "Rejected"
+                            : "Pending Review"}
                     </span>
                   </td>
 

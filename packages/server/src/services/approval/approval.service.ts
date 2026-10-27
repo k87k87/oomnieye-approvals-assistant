@@ -27,15 +27,28 @@ export class ApprovalService {
   }
 
   public getItems(): ApprovalItem[] {
+    this.loadData();
     return this.items;
   }
 
+  public getPendingItems(): ApprovalItem[] {
+    this.loadData();
+    return this.items.filter((item) => {
+      const s = (item.status || "").toLowerCase();
+      return !s.includes("completed") && !s.includes("approved") && !s.includes("rejected");
+    });
+  }
+
   public getItemById(id: string): ApprovalItem | undefined {
+    this.loadData();
     return this.items.find((item) => item.id === id);
   }
 
   public getUrgentItems(): ApprovalItem[] {
-    return this.items.filter((item) => item.urgent || item.type === "Video" || item.type === "PDF");
+    this.loadData();
+    return this.getPendingItems().filter(
+      (item) => item.urgent || item.type === "Video" || item.type === "PDF",
+    );
   }
 }
 
