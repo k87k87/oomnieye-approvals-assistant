@@ -1,6 +1,13 @@
+import path from "path";
+import dotenv from "dotenv";
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+dotenv.config();
+
 import { Response } from "express";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
   ApprovalItem,
   StructuredSummary,
@@ -18,23 +25,39 @@ import { ragService } from "../rag/rag.service";
 export class LlmService {
   private openai: OpenAI | null = null;
   private anthropic: Anthropic | null = null;
-  private provider: "openai" | "anthropic" | "mock" = "mock";
+  private genAI: GoogleGenerativeAI | null = null;
+  private provider: "openai" | "anthropic" | "gemini" | "mock" = "mock";
 
   constructor() {
     this.initProvider();
   }
 
   private initProvider(): void {
+    if (process.env.NODE_ENV === "test") {
+      this.provider = "mock";
+      return;
+    }
+
     const openaiKey = process.env.OPENAI_API_KEY;
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
     const preferred = process.env.LLM_PROVIDER?.toLowerCase();
 
     if (preferred === "anthropic" && anthropicKey) {
       this.anthropic = new Anthropic({ apiKey: anthropicKey });
       this.provider = "anthropic";
+    } else if (preferred === "gemini" && geminiKey) {
+      this.genAI = new GoogleGenerativeAI(geminiKey);
+      this.provider = "gemini";
+    } else if (preferred === "openai" && openaiKey) {
+      this.openai = new OpenAI({ apiKey: openaiKey });
+      this.provider = "openai";
     } else if (openaiKey) {
       this.openai = new OpenAI({ apiKey: openaiKey });
       this.provider = "openai";
+    } else if (geminiKey) {
+      this.genAI = new GoogleGenerativeAI(geminiKey);
+      this.provider = "gemini";
     } else if (anthropicKey) {
       this.anthropic = new Anthropic({ apiKey: anthropicKey });
       this.provider = "anthropic";
@@ -105,6 +128,17 @@ export class LlmService {
           const block = msg.content[0];
           const text = block?.type === "text" ? block.text.trim() : "";
           if (!text) throw new Error("Empty greeting returned by Anthropic");
+          return { greeting: text, degraded: false };
+        }
+
+        if (this.provider === "gemini" && this.genAI) {
+          const model = this.genAI.getGenerativeModel({
+            model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
+            systemInstruction: GREETING_PROMPT_V1.buildSystemPrompt(items),
+          });
+          const result = await model.generateContent("Generate greeting for the approvals queue");
+          const text = result.response.text()?.trim();
+          if (!text) throw new Error("Empty greeting returned by Gemini");
           return { greeting: text, degraded: false };
         }
 
@@ -217,6 +251,14 @@ export class LlmService {
 
           const block = msg.content[0];
           rawJson = block?.type === "text" ? block.text : "";
+        } else if (this.provider === "gemini" && this.genAI) {
+          const model = this.genAI.getGenerativeModel({
+            model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
+            generationConfig: { responseMimeType: "application/json" },
+            systemInstruction: SUMMARY_PROMPT_V1.buildSystemPrompt(language),
+          });
+          const result = await model.generateContent(SUMMARY_PROMPT_V1.buildUserPrompt(items));
+          rawJson = result.response.text();
         }
 
         if (!rawJson) throw new Error("Empty response returned by LLM");
@@ -245,17 +287,50 @@ export class LlmService {
     language: string = "en",
   ): Promise<void> {
     const systemPrompt = TALK_PROMPT_V1.buildSystemPrompt(items, language);
+    const lower = (userMessage || "").toLowerCase();
+    let dynamicFallback = `Based on current queue analysis:
+- **Priority 1**: "Level 2 Drone Patrol Video Demo" submitted by Alex HelpAdmin. Drone flights have perimeter safety implications and require UTC telemetry clock sync.
+- **Priority 2**: "Safety Equipment & Sensor Specs" submitted by Sam HelpAdmin. IoT vibration/thermal sensors must be verified against ISO 9001 and calibration thresholds (< 30 days must be rejected).
+- **Priority 3**: "360° Spatial Zone Layout & Camera Map" submitted by Elena HelpAdmin. Verify 15% camera overlap to prevent blind spots.
+- **Priority 4**: "Site Patrol Onboarding & Checklists" for standard routine sign-off.`;
+
+    if (lower.includes("drone") || lower.includes("alex") || lower.includes("video")) {
+      dynamicFallback = `**Level 2 Drone Patrol Video Demo (Alex HelpAdmin)**:
+• **Urgency**: HIGH
+• **Operational Reason**: Autonomous flight sweeps directly impact physical perimeter security.
+• **Verification Checklist**: Check continuous 60fps recording, verify altitude is strictly between 15m and 45m AGL, and confirm the UTC telemetry clock matches command centre time before sign-off.`;
+    } else if (
+      lower.includes("sensor") ||
+      lower.includes("sam") ||
+      lower.includes("hardware") ||
+      lower.includes("vibration") ||
+      lower.includes("thermal")
+    ) {
+      dynamicFallback = `**Safety Equipment & Sensor Specs (Sam HelpAdmin)**:
+• **Urgency**: HIGH
+• **Operational Reason**: IoT vibration and thermal sensors operate in hazardous machinery zones.
+• **Verification Checklist**: Confirm OSHA Class 1 Div 2 and ISO 9001 compliance. Ensure factory calibration is not within 30 days of expiry, and verify 72-hour battery backup schematics.`;
+    } else if (
+      lower.includes("camera") ||
+      lower.includes("spatial") ||
+      lower.includes("map") ||
+      lower.includes("elena")
+    ) {
+      dynamicFallback = `**360° Spatial Zone Layout & Camera Map (Elena HelpAdmin)**:
+• **Urgency**: MEDIUM
+• **Operational Reason**: Establishes coordinate overlays for digital twin spatial tracking.
+• **Verification Checklist**: Confirm adjacent camera field-of-view overlap is at least 15% to eliminate blind spots, and verify WGS84 datum alignment.`;
+    } else if (lower.length <= 4 || lower === "hi" || lower === "hello") {
+      dynamicFallback = `Hello, Operator. I am your Approvals Reasoning Assistant. You currently have 4 pending items in the queue.\n\nYou can ask me:\n• *"Which item needs my attention first and why?"*\n• *"Explain the risk with the Drone Patrol Video"*\n• *"What are the requirements for Sam's sensor specs?"*`;
+    }
+
     await this.handleStreamWithFallback({
       res,
       operationName: "Talk to me",
       systemPrompt,
       history,
       userMessage,
-      fallbackContent: `Based on current queue analysis:
-- **Priority 1**: "Level 2 Drone Patrol Video Demo" submitted by Alex HelpAdmin. Drone flights have perimeter safety implications and require UTC telemetry clock sync.
-- **Priority 2**: "Safety Equipment & Sensor Specs" submitted by Sam HelpAdmin. IoT vibration/thermal sensors must be verified against ISO 9001 and calibration thresholds (< 30 days must be rejected).
-- **Priority 3**: "360° Spatial Zone Layout & Camera Map" submitted by Elena HelpAdmin. Verify 15% camera overlap to prevent blind spots.
-- **Priority 4**: "Site Patrol Onboarding & Checklists" for standard routine sign-off.`,
+      fallbackContent: dynamicFallback,
     });
   }
 
@@ -269,7 +344,10 @@ export class LlmService {
   ): Promise<void> {
     const retrievedChunks = ragService.retrieve(userMessage, 3);
     const systemPrompt = RAG_HELP_PROMPT_V1.buildSystemPrompt(retrievedChunks, language);
-    const citations = retrievedChunks.map((c) => c.sectionTitle);
+    // Only cite sections with positive relevance match (unmatched queries like 'dd' have 0 citations)
+    const citations = retrievedChunks
+      .filter((c) => c.relevanceScore > 0)
+      .map((c) => c.sectionTitle);
 
     const directFallback = ragService.getDirectPolicyFallback(userMessage);
 
@@ -404,6 +482,26 @@ Would you like to practice Step 1 with the Drone Patrol Video?`,
         for await (const event of stream) {
           if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
             sendEvent({ token: event.delta.text, degraded: false, citations });
+          }
+        }
+      } else if (this.provider === "gemini" && this.genAI) {
+        const model = this.genAI.getGenerativeModel({
+          model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
+          systemInstruction: systemPrompt,
+        });
+
+        const chat = model.startChat({
+          history: history.map((h) => ({
+            role: h.role === "assistant" ? "model" : "user",
+            parts: [{ text: h.content }],
+          })),
+        });
+
+        const resultStream = await chat.sendMessageStream(userMessage);
+        for await (const chunk of resultStream.stream) {
+          const text = chunk.text();
+          if (text) {
+            sendEvent({ token: text, degraded: false, citations });
           }
         }
       }

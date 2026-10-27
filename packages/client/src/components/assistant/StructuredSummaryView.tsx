@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
   AlertTriangle,
@@ -6,6 +6,8 @@ import {
   AlertCircle,
   Lightbulb,
   ShieldAlert,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useAssistantStore } from "../../store/useAssistantStore";
 import { UrgencyLevel } from "@oomnieye/shared";
@@ -13,6 +15,33 @@ import { UrgencyLevel } from "@oomnieye/shared";
 export const StructuredSummaryView: React.FC = () => {
   const { structuredSummary, isSummaryLoading, backToCards, errorMessage, startAction } =
     useAssistantStore();
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handleToggleSpeech = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window) || !structuredSummary) return;
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      window.speechSynthesis.cancel();
+      const textToSpeak = `${structuredSummary.overview}. Top operational recommendation: ${structuredSummary.topRecommendation}`;
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.rate = 1.0;
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(true);
+    }
+  };
 
   if (isSummaryLoading) {
     return (
@@ -109,7 +138,30 @@ export const StructuredSummaryView: React.FC = () => {
 
       {/* Overview Paragraph */}
       <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80 text-xs text-slate-700 leading-relaxed">
-        <span className="font-bold text-slate-900 block mb-0.5">Executive Queue Synthesis</span>
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-bold text-slate-900 block">Executive Queue Synthesis</span>
+          <button
+            onClick={handleToggleSpeech}
+            className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors ${
+              isSpeaking
+                ? "bg-rose-100 text-rose-700 hover:bg-rose-200"
+                : "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+            }`}
+            title="Read summary out loud (Web Speech API)"
+          >
+            {isSpeaking ? (
+              <>
+                <VolumeX className="w-3 h-3 text-rose-600 animate-pulse" />
+                <span>Stop Reading</span>
+              </>
+            ) : (
+              <>
+                <Volume2 className="w-3 h-3 text-blue-600" />
+                <span>Read Out Loud</span>
+              </>
+            )}
+          </button>
+        </div>
         {structuredSummary.overview}
       </div>
 

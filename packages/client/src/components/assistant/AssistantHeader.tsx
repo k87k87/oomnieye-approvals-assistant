@@ -29,7 +29,12 @@ export const AssistantHeader: React.FC<AssistantHeaderProps> = ({ onClose }) => 
       <div className="flex items-center space-x-1.5">
         {/* Replay Greeting Button */}
         <button
-          onClick={() => loadGreeting()}
+          onClick={() => {
+            if (activeView !== "cards") {
+              backToCards();
+            }
+            loadGreeting();
+          }}
           disabled={isGreetingLoading}
           title="Replay Greeting (Context-Aware Regeneration)"
           className="flex items-center space-x-1 px-2 py-1 text-[11px] font-medium text-slate-200 bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-md transition-all border border-white/10 disabled:opacity-50"

@@ -1,1 +1,2 @@
+export PATH="/c/Program Files/nodejs:/c/Users/hirva/AppData/Roaming/npm:$PATH"
 npx --no -- commitlint --edit "$1"

@@ -97,31 +97,56 @@ export class RagService {
     // Sort descending by relevance score
     scored.sort((a, b) => b.relevanceScore - a.relevanceScore);
 
-    // Return topK chunks (ensuring at least the most relevant is returned)
-    const top = scored.slice(0, topK);
-    // If all scores were 0, return the first 2 chunks so model has grounding
-    if (top.every((t) => t.relevanceScore === 0)) {
-      return this.chunks.slice(0, 2).map((c) => ({
-        sectionTitle: c.sectionTitle,
-        content: c.content,
-        relevanceScore: 0.5,
-      }));
+    const maxScore = scored[0]?.relevanceScore || 0;
+
+    // Only return chunks with strong relevance (above 0.35 and within 50% of top score)
+    const matching = scored.filter(
+      (s) => s.relevanceScore >= 0.35 && s.relevanceScore >= 0.5 * maxScore,
+    );
+    if (matching.length > 0) {
+      return matching.slice(0, topK);
     }
 
-    return top;
+    // If all scores were below threshold (unrelated query like "dd"), return chunks with relevanceScore = 0
+    return this.chunks.slice(0, 2).map((c) => ({
+      sectionTitle: c.sectionTitle,
+      content: c.content,
+      relevanceScore: 0,
+    }));
   }
 
   /**
-   * Deterministic fallback when AI is unavailable or timed out
+   * Deterministic fallback when AI is unavailable, rate-limited, or query needs direct policy excerpt
    */
   public getDirectPolicyFallback(query: string): { answer: string; citations: string[] } {
     const relevant = this.retrieve(query, 2);
-    const citations = relevant.map((r) => r.sectionTitle);
+    // Only cite sections that actually matched
+    const citations = relevant.filter((r) => r.relevanceScore > 0).map((r) => r.sectionTitle);
 
-    const answer = relevant.map((r) => `### [${r.sectionTitle}]\n${r.content}`).join("\n\n");
+    const queryClean = (query || "").trim();
+    const queryTokens = queryClean
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((t) => t.length > 2);
+
+    const hasMatches = citations.length > 0;
+
+    // If query is gibberish (e.g., "dd"), greeting, or has zero policy keyword matches:
+    if (!hasMatches || queryTokens.length === 0) {
+      return {
+        answer: `Hello, Operator. I am grounded strictly in the **OomniEye Digital Twin Approval & Maintenance Policy (Rev 2.4)**.\n\nI couldn't find a direct policy section matching "${queryClean}". You can ask me operational policy questions such as:\n\n• **Drone Patrol Flight Rules**: *"What are the altitude and fps verification criteria for Level 2 Drone Videos?"*\n• **Sensor Calibration**: *"When should IoT vibration and thermal sensor specs be rejected?"*\n• **Camera Blind Spots**: *"What is the required field-of-view overlap for spatial zone camera layouts?"*\n• **Supervisor Escalation**: *"What is the 48-hour auto-escalation policy?"*`,
+        citations: [], // No citations for unmatched queries
+      };
+    }
+
+    const answer = relevant
+      .filter((r) => r.relevanceScore > 0)
+      .map((r) => `### [${r.sectionTitle}]\n${r.content}`)
+      .join("\n\n");
 
     return {
-      answer: `*Policy Document Reference (Direct Retrieval)*:\n\n${answer}`,
+      answer: `*Policy Document Reference (Grounded Retrieval)*:\n\n${answer}`,
       citations,
     };
   }

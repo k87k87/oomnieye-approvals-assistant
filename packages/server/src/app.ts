@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import { apiRouter } from "./routes";
 import { errorHandler } from "./errors/errorHandler";
 
+import path from "path";
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 dotenv.config();
 
 export function createApp(): Express {
