@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { llmService } from "../../src/services/ai/llm.service";
 import { ApprovalItem } from "@oomnieye/shared";
 
-describe("Unit Tests: LLM Service & Fallback Resiliency", () => {
+describe("llmService (mock & fallbacks)", () => {
   const mockItems: ApprovalItem[] = [
     {
       id: "mock-1",
@@ -24,14 +24,14 @@ describe("Unit Tests: LLM Service & Fallback Resiliency", () => {
     },
   ];
 
-  it("generateGreeting should produce context-aware greeting referencing pending items", async () => {
+  it("generates greeting referencing pending items", async () => {
     const result = await llmService.generateGreeting(mockItems);
     expect(result).toBeDefined();
     expect(result.greeting).toContain("2 items pending review");
     expect(typeof result.degraded).toBe("boolean");
   });
 
-  it("generateSummary should return valid structured summary with urgency rankings", async () => {
+  it("returns structured summary with urgency rankings", async () => {
     const summary = await llmService.generateSummary(mockItems, "en");
     expect(summary).toBeDefined();
     expect(summary.totalPending).toBe(2);
@@ -42,8 +42,8 @@ describe("Unit Tests: LLM Service & Fallback Resiliency", () => {
     expect(droneItem?.urgency).toBe("HIGH");
   });
 
-  it("generateSummary should execute graceful degradation without throwing when timeout is triggered", async () => {
-    // Force a 1ms timeout to trigger graceful fallback path
+  it("gracefully degrades when timeout fires without throwing", async () => {
+    // 1ms timeout forces fallback branch
     const degradedSummary = await llmService.generateSummary(mockItems, "en", 1);
     expect(degradedSummary).toBeDefined();
     expect(degradedSummary.degraded).toBe(true);

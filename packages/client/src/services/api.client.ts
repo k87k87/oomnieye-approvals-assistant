@@ -12,9 +12,7 @@ import {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export class ApiClient {
-  /**
-   * Fetch pending approval queue items
-   */
+  // Fetch current approvals queue
   public static async getApprovals(): Promise<ApprovalQueueResponse> {
     const res = await fetch(`${API_BASE}/approvals`, { cache: "no-store" });
     if (!res.ok) {
@@ -24,9 +22,7 @@ export class ApiClient {
     return ApprovalQueueResponseSchema.parse(data);
   }
 
-  /**
-   * Action 5: Replay Greeting
-   */
+  // Get dynamic greeting based on queue status
   public static async getGreeting(): Promise<GreetingResponse> {
     const res = await fetch(`${API_BASE}/assistant/greeting`);
     if (!res.ok) {
@@ -36,9 +32,7 @@ export class ApiClient {
     return GreetingResponseSchema.parse(data);
   }
 
-  /**
-   * Action 1: Present me Summary (structured JSON)
-   */
+  // Request structured priority summary
   public static async getSummary(language: string = "en"): Promise<SummaryResponse> {
     const res = await fetch(`${API_BASE}/assistant/summary`, {
       method: "POST",
@@ -52,9 +46,7 @@ export class ApiClient {
     return SummaryResponseSchema.parse(data);
   }
 
-  /**
-   * Streaming for Talk to me, Help me, Teach me
-   */
+  // Stream assistant responses (talk, help, teach) via SSE
   public static async streamAssistantAction(params: {
     action: ActionType;
     message?: string;
@@ -121,7 +113,7 @@ export class ApiClient {
               return;
             }
           } catch {
-            // Ignore malformed partial chunks
+            // Partial chunk or non-json line; wait for next buffer
           }
         }
       }

@@ -3,7 +3,7 @@ import { approvalService } from "../services/approval/approval.service";
 import { ApprovalQueueResponseSchema } from "@oomnieye/shared";
 
 export class ApprovalsController {
-  public getQueue(_req: Request, res: Response, next: NextFunction): void {
+  public getQueue = (_req: Request, res: Response, next: NextFunction): void => {
     try {
       const items = approvalService.getItems();
       const response = ApprovalQueueResponseSchema.parse({
@@ -16,9 +16,9 @@ export class ApprovalsController {
     } catch (err) {
       next(err);
     }
-  }
+  };
 
-  public getItemById(req: Request, res: Response, next: NextFunction): void {
+  public getItemById = (req: Request, res: Response, next: NextFunction): void => {
     try {
       const { id } = req.params;
       if (!id) {
@@ -37,7 +37,7 @@ export class ApprovalsController {
     } catch (err) {
       next(err);
     }
-  }
+  };
 }
 
 export const approvalsController = new ApprovalsController();

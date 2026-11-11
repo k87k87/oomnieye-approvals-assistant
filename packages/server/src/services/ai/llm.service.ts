@@ -63,9 +63,7 @@ export class LlmService {
       this.provider = "anthropic";
     } else {
       this.provider = "mock";
-      console.info(
-        "[LlmService] No active LLM API keys detected. Operating in High-Fidelity Mock Mode.",
-      );
+      console.info("[llm.service] No active API keys configured. Running with local mock responses.");
     }
   }
 
@@ -73,9 +71,7 @@ export class LlmService {
     return this.provider;
   }
 
-  // ==========================================
-  // ACTION 1: REPLAY GREETING
-  // ==========================================
+  // Greeting generation with queue context
   public async generateGreeting(
     items: ApprovalItem[],
     timeoutMs: number = 8000,
@@ -149,9 +145,7 @@ export class LlmService {
     );
   }
 
-  // ==========================================
-  // ACTION 2: PRESENT ME SUMMARY (STRUCTURED JSON)
-  // ==========================================
+  // Structured summary generation ranking queue items by priority
   public async generateSummary(
     items: ApprovalItem[],
     language: string = "en",
@@ -160,7 +154,7 @@ export class LlmService {
     const fallbackSummary = (reason: string): StructuredSummary => {
       const urgentItems = items.filter((i) => i.urgent || i.type === "Video" || i.type === "PDF");
       return {
-        overview: `Operational Queue Synthesis (Deterministic Rule-Based Fallback): ${items.length} pending items cataloged.`,
+        overview: `Queue Summary: ${items.length} pending items currently awaiting review.`,
         totalPending: items.length,
         highPriorityCount: urgentItems.length,
         prioritizedItems: items.map((i) => ({
@@ -189,7 +183,7 @@ export class LlmService {
         })),
         topRecommendation:
           urgentItems.length > 0
-            ? `Execute immediate review of '${urgentItems[0]?.name}' to prevent operational delay.`
+            ? `Review '${urgentItems[0]?.name}' first to prevent operational delays.`
             : "Review pending onboarding checklists.",
         degraded: true,
         fallbackReason: reason,
@@ -203,7 +197,7 @@ export class LlmService {
           if (signal.aborted) {
             throw new Error("Operation timed out");
           }
-          // Simulate small processing window so microsecond timeouts trigger abort
+          // Small delay so sub-millisecond timeouts trigger abort as expected in tests
           await new Promise<void>((resolve, reject) => {
             const timer = setTimeout(() => resolve(), 30);
             signal.addEventListener("abort", () => {
@@ -212,7 +206,7 @@ export class LlmService {
             });
           });
 
-          const raw = fallbackSummary("Simulated high-fidelity structured output in mock mode");
+          const raw = fallbackSummary("Simulated structured response in mock mode");
           raw.degraded = false;
           delete raw.fallbackReason;
           return StructuredSummarySchema.parse(raw);
@@ -264,7 +258,6 @@ export class LlmService {
 
         if (!rawJson) throw new Error("Empty response returned by LLM");
 
-        // Parse and validate strictly with Zod
         const parsed = JSON.parse(rawJson);
         return StructuredSummarySchema.parse({
           ...parsed,
@@ -277,9 +270,7 @@ export class LlmService {
     );
   }
 
-  // ==========================================
-  // ACTION 3: TALK TO ME (STREAMING)
-  // ==========================================
+  // Conversational streaming assistant over current queue
   public async streamTalk(
     items: ApprovalItem[],
     history: ChatMessage[],
@@ -335,9 +326,7 @@ export class LlmService {
     });
   }
 
-  // ==========================================
-  // ACTION 4: HELP ME (RAG-GROUNDED STREAMING)
-  // ==========================================
+  // Policy Q&A grounded in maintenance policy documentation
   public async streamHelp(
     userMessage: string,
     res: Response,
@@ -345,7 +334,6 @@ export class LlmService {
   ): Promise<void> {
     const retrievedChunks = ragService.retrieve(userMessage, 3);
     const systemPrompt = RAG_HELP_PROMPT_V1.buildSystemPrompt(retrievedChunks, language);
-    // Only cite sections with positive relevance match (unmatched queries like 'dd' have 0 citations)
     const citations = retrievedChunks
       .filter((c) => c.relevanceScore > 0)
       .map((c) => c.sectionTitle);
@@ -364,9 +352,7 @@ export class LlmService {
     });
   }
 
-  // ==========================================
-  // ACTION 5: TEACH ME (STEP-BY-STEP STREAMING)
-  // ==========================================
+  // Interactive walkthrough of review procedure
   public async streamTeach(
     step: number,
     history: ChatMessage[],
@@ -381,19 +367,17 @@ export class LlmService {
       systemPrompt,
       history,
       userMessage: userMessage || "How do I review an approval request in the command centre?",
-      fallbackContent: `### OomniEye Standard Approval Procedure (4 Steps):
-1. **Step 1 - Inspect Metadata**: Review the submitter, timestamp, and asset type in the Approvals table.
-2. **Step 2 - Telemetry Verification**: For drone footage, verify 60fps and 15m–45m altitude limits. For sensors, check ISO 9001 compliance.
-3. **Step 3 - Run Checklist**: Ensure all safety items are checked off with zero open alerts.
-4. **Step 4 - Sign-off**: Record operational audit notes and click 'Approve' or 'Reject' with justification.
+      fallbackContent: `### Standard Review Procedure:
+1. **Step 1 - Inspect Metadata**: Check submitter, timestamp, and asset type in the Approvals table.
+2. **Step 2 - Telemetry Verification**: Verify 60fps and 15m–45m altitude for drone video. Check ISO 9001 and calibration dates for sensors.
+3. **Step 3 - Run Checklist**: Verify all required fields and confirm no active alarms.
+4. **Step 4 - Sign-off**: Record notes and submit 'Approve' or 'Reject' with clear rationale.
 
 Would you like to practice Step 1 with the Drone Patrol Video?`,
     });
   }
 
-  // ==========================================
-  // COMMON RESILIENT SSE STREAM HANDLER
-  // ==========================================
+  // Stream SSE tokens with timeout guard and fallback
   private async handleStreamWithFallback(params: {
     res: Response;
     operationName: string;
@@ -408,7 +392,6 @@ Would you like to practice Step 1 with the Drone Patrol Video?`,
       params;
     const timeoutMs = params.timeoutMs ?? 8000;
 
-    // Set SSE Headers
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -419,7 +402,6 @@ Would you like to practice Step 1 with the Drone Patrol Video?`,
       res.write(`data: ${JSON.stringify(data)}\n\n`);
     };
 
-    // If in mock mode, stream tokens naturally with simulated delay
     if (this.provider === "mock") {
       const words = fallbackContent.split(" ");
       for (const word of words) {
@@ -514,13 +496,10 @@ Would you like to practice Step 1 with the Drone Patrol Video?`,
     } catch (err) {
       clearTimeout(timeoutTimer);
       const error = err instanceof Error ? err : new Error(String(err));
-      console.warn(
-        `[Graceful Degradation] ${operationName} stream interrupted: "${error.message}". Emitting fallback chunk.`,
-      );
+      console.warn(`[llm.service] ${operationName} stream interrupted (${error.message}). Emitting fallback chunk.`);
 
-      // Never crash or leave stream open; emit graceful fallback notice
       sendEvent({
-        token: `\n\n*(Notice: AI response took longer than 8s or encountered a network delay. Showing operational fallback)*:\n\n${fallbackContent}`,
+        token: `\n\n*(Note: Service is taking longer than expected. Showing recommendations below)*:\n\n${fallbackContent}`,
         degraded: true,
         done: true,
         citations,

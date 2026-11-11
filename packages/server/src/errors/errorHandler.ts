@@ -9,13 +9,11 @@ export function errorHandler(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction,
 ): void {
-  // If response headers are already sent (e.g. midway through an SSE stream), delegate to default Express handler
   if (res.headersSent) {
     res.end();
     return;
   }
 
-  // Handle Zod Validation Errors
   if (err instanceof ZodError) {
     res.status(400).json({
       success: false,
@@ -31,7 +29,6 @@ export function errorHandler(
     return;
   }
 
-  // Handle Typed Operational AppErrors
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       success: false,
@@ -44,13 +41,12 @@ export function errorHandler(
     return;
   }
 
-  // Handle Unexpected Server Errors
-  console.error("[Unhandled Exception]", err);
+  console.error("[error]", err);
   res.status(500).json({
     success: false,
     error: {
       code: "INTERNAL_SERVER_ERROR",
-      message: "An unexpected internal server error occurred.",
+      message: process.env.NODE_ENV === "production" ? "Internal server error" : err.message,
     },
   });
 }

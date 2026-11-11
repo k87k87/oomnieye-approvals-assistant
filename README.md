@@ -1,20 +1,18 @@
-# OomniEye Approvals AI Assistant · Digital Twin Command Centre
-**Assessment**: Sr. Fullstack Developer — MERN + AI (Wave 2 Technical Take-Home)  
-**Target UI**: OomniEye Digital-Twin Approvals & Review Assistant Panel  
+# OomniEye Approvals Assistant
+
+A fullstack application for the **OomniEye Approvals Assistant** panel, built with Next.js 14, Express, TypeScript, and Tailwind CSS. The assistant provides contextual summaries, conversational reasoning, grounded policy search, and onboarding guides over pending approval items, with streaming responses and deterministic fallbacks.
 
 ---
 
-## 1. Project Overview
+## 1. Overview
 
-This repository is a production-grade fullstack web application rebuilding the **OomniEye Digital-Twin Approvals Assistant** panel. The assistant lives inside an operator's approvals workflow, where every user action is powered by a genuine server-side Large Language Model (LLM) decision layer (supporting OpenAI GPT-4o, Anthropic Claude 3.5 Sonnet, and a zero-config high-fidelity mock provider for cost-free review).
+The assistant sits alongside an operator's approvals workflow to help review, prioritize, and verify items in the queue:
 
-Key capabilities implemented:
-- **Token-by-Token Streaming UI**: AI responses stream progressively via Server-Sent Events (SSE) with real-time token rendering—no spinner-then-dump.
-- **Strict Zod Contracts**: All API requests, responses, and structured LLM outputs are validated with Zod prior to reaching the UI.
-- **In-Memory RAG Grounding**: Operational Q&A for *"Help me"* is grounded strictly in a 300-word maintenance policy document over 4 section chunks.
-- **8-Second Timeout & Graceful Degradation**: Every LLM call is governed by an `AbortController` timeout (8s max) that catches stalled calls, key failures, or rate limits, degrading into deterministic rule-based fallbacks rather than raw 500s or frozen UIs.
-- **Test-First Discipline (TDD)**: 19 automated tests spanning Vitest unit tests, Supertest integration tests, and React Testing Library component tests.
-- **Git Safety Automation**: Husky git hooks enforcing linting, formatting, conventional commit messages, and automated pre-push test suites.
+- **Token Streaming UI**: Responses stream progressively over Server-Sent Events (SSE) using a `ReadableStream` reader on the client.
+- **Contract Enforcement with Zod**: API payloads, query responses, and structured LLM outputs are validated against shared Zod schemas (`@oomnieye/shared`).
+- **Grounded Policy Retrieval (RAG)**: The "Help me" action retrieves matching excerpts from `approvalPolicy.md` to keep answers strictly grounded in official operating procedures.
+- **Resilience & Graceful Degradation**: Calls to LLM providers are guarded by an 8-second `AbortController` timeout. If a call times out, encounters a rate limit, or lacks API credentials, the system falls back to rule-based data (`degraded: true`) instead of failing with a 500 or leaving the UI hanging.
+- **Provider Support**: Works with Google Gemini, OpenAI, Anthropic Claude, or in mock mode out-of-the-box for local development without API keys.
 
 ---
 
@@ -23,25 +21,25 @@ Key capabilities implemented:
 ```
                    ┌────────────────────────────────────────┐
                    │    Next.js 14 Client (Port 3000)       │
-                   │  - Tailwind CSS + Glassmorphism Theme  │
-                   │  - Zustand Conversation & Stream Store │
+                   │  - Tailwind CSS + Lucide Icons         │
+                   │  - Zustand Store (chat, stream state)  │
                    │  - SSE ReadableStream Consumer         │
                    └──────────────────┬─────────────────────┘
                                       │ HTTP / Server-Sent Events
                                       ▼
                    ┌────────────────────────────────────────┐
                    │      Express API Server (Port 5000)     │
-                   │  - TypeScript Strict Mode              │
-                   │  - express-rate-limit Throttling       │
+                   │  - TypeScript (Strict Mode)            │
+                   │  - express-rate-limit                  │
                    │  - withTimeout (8s AbortController)    │
-                   │  - Versioned Prompts (/prompts/*.ts)   │
+                   │  - Prompts & Retrieval Layer           │
                    └──────┬──────────────────────┬──────────┘
                           │                      │
-             In-Memory Retrieval           LLM Decision Layer
+             In-Memory Retrieval           LLM Provider Layer
                           ▼                      ▼
                ┌──────────────────────┐┌──────────────────────┐
-               │  RagService          ││ OpenAI / Anthropic   │
-               │  (approvalPolicy.md) ││ / High-Fidelity Mock │
+               │  RagService          ││ Gemini / OpenAI /    │
+               │  (approvalPolicy.md) ││ Claude / Local Mock  │
                └──────────────────────┘└──────────────────────┘
                           ▲                      ▲
                           └──────────┬───────────┘
@@ -52,130 +50,135 @@ Key capabilities implemented:
                         └────────────────────────┘
 ```
 
-| Layer | Technology | Purpose |
+| Layer | Technologies | Notes |
 | :--- | :--- | :--- |
-| **Frontend** | Next.js 14 (App Router) + React 18 | High-fidelity OomniEye Digital Twin Approvals UI and floating assistant widget. |
-| **Styling** | Tailwind CSS + CSS Modules | Glassmorphism, animations, custom scrollbars, and digital-twin preview overlays. |
-| **State** | Zustand | Multi-turn chat session, streaming token buffers, and UI view transitions. |
-| **Backend** | Node.js + Express (TypeScript Strict) | Decoupled API server with native Supertest integration testability. |
-| **Contracts** | Zod (`zod`) | OpenAPI-first validation of requests, responses, and LLM structured JSON. |
-| **AI / LLM** | OpenAI GPT-4o / Claude 3.5 Sonnet | Server-side only via official SDKs, with zero-config high-fidelity mock mode. |
-| **RAG** | In-Memory Token Relevance Search | Chunking and similarity retrieval over 300-word operational policy. |
-| **Resilience** | `withTimeout` (8s) | Prevents UI freeze; ensures graceful deterministic degradation. |
-| **Safety** | Husky + lint-staged + commitlint | Pre-commit linting, formatting, conventional commits, pre-push test execution. |
-| **Testing** | Vitest + Supertest + RTL | Unit, Integration, and Component test suites. |
+| **Frontend** | Next.js 14 (App Router), React 18 | Approvals queue table, telemetry preview, and floating assistant widget. |
+| **Styling** | Tailwind CSS | Modern command-center layout with glassmorphism and status indicators. |
+| **State** | Zustand | Manages chat history, streaming token buffers, and view transitions. |
+| **Backend** | Node.js, Express, TypeScript | Modular API with separated controllers, services, and middlewares. |
+| **Contracts** | Zod | Single source of truth for request, response, and structured summary shapes. |
+| **AI / LLM** | Gemini / OpenAI / Claude / Mock | Configurable via environment variables with built-in mock fallback. |
+| **Retrieval** | In-Memory Token Scoring | Section chunking and keyword relevance matching over operational policy. |
+| **Resilience** | `withTimeout` (8s timeout) | AbortSignal-based wrapper providing deterministic fallback data. |
+| **Testing** | Vitest, Supertest, React Testing Library | Unit, API integration, and component tests. |
 
 ---
 
-## 3. Architecture & AI Judgment Essay (150–250 Words)
+## 3. Design Decisions & AI Trade-offs
 
-> ### AI-Necessary vs. AI-Unnecessary Breakdown, Fallbacks & Future Trade-offs
->
-> In high-stakes command centres, deploying an LLM requires rigorous operational judgment. We classify **Talk to me** and **Present me Summary** as **AI-necessary**: free-form conversational reasoning over dynamic queue attributes and contextual risk synthesis (weighing flight safety against calibration expirations) require semantic reasoning that static heuristics fail to capture. For **Help me**, AI is **high-value but bounded**: the model must synthesize natural explanations, but general knowledge is disabled in favor of strict RAG grounding in the maintenance policy document. Conversely, **Replay Greeting** is **AI-unnecessary/augmented**: while generating context-aware greetings adds polish, deterministic templates referencing queue counts achieve 90% of the utility with zero latency or API cost.
->
-> **Fallback Design**: Network latency and LLM outages are inevitable. Every AI call is wrapped with an `AbortController` capped at 8,000ms. If an API key is revoked, rate limits trip, or the timeout fires, the system catches the error, marks the response as `degraded: true`, and returns deterministic rule-based output (e.g. sorting videos/sensors to high priority, or returning verbatim policy chunks). The UI immediately presents a non-intrusive fallback badge without throwing raw 500s or freezing.
->
-> **What We'd Do Differently With More Time**: We would replace in-memory keyword retrieval with a persistent vector database (`pgvector` via PostgreSQL) using dense semantic embeddings, add full WebSocket bidirectional telemetry streaming, and implement live approval action mutations (Approve/Reject) syncing directly into digital-twin hardware.
+When designing an approvals assistant for an operations workflow, choosing where to rely on an LLM versus where deterministic logic is better is a critical decision:
 
----
-
-## 4. The 5 Core AI Entry Points & Fallback Matrix
-
-| Entry Point | UI Trigger | Real LLM Behavior | AI Necessity | Graceful Fallback (8s Timeout / Key Failure) |
-| :--- | :--- | :--- | :--- | :--- |
-| **1. Present me Summary** | "Present me Summary" Card | Structured JSON analysis ranking items by urgency score & operational risk. | **AI-Necessary** | Rule-based sort (Video/PDF prioritized) + deterministic action advice. |
-| **2. Talk to me** | "Talk to me" Card | Multi-turn streaming dialogue (e.g., *"Which of these needs my attention first?"*). | **AI-Necessary** | Contextual queue status message with standard action prompts. |
-| **3. Help me** | "Help me" Card | Q&A grounded in `approvalPolicy.md` chunks; returns section citations. | **High-Value Bounded AI** | Direct excerpt retrieval of matching policy sections. |
-| **4. Teach me** | "Teach me" Card | Step-by-step interactive onboarding for new operators; adapts to questions. | **Partially AI-Necessary** | Deterministic 4-step SOP walkthrough with interactive checklists. |
-| **5. Replay Greeting** | Top-right Refresh Button | Context-aware greeting referencing current pending item counts and types. | **AI-Augmented** | Dynamic template: *"Welcome back, Operator. You have 4 pending requests."* |
+- **Where AI is necessary**: **Talk to me** (open-ended chat) and **Present me Summary** (risk synthesis) genuinely require language model capabilities. Sorting algorithms alone cannot evaluate nuanced operational risk across changing asset types, submitter roles, and perimeter safety rules. Free-form queries such as *"Which of these needs my attention first and why?"* demand semantic reasoning over the entire queue.
+- **Where AI is bounded (RAG)**: For **Help me**, operators need strict compliance answers, not creative prose. An in-memory retrieval step searches `approvalPolicy.md` chunks for relevant criteria (e.g. 60fps drone recording, ISO 9001 sensor calibration, 15% camera overlap) and injects only matching text into the prompt with guardrails against extrapolation.
+- **Where AI is optional**: Features like **Replay Greeting** can use an LLM for natural variation, but a templated fallback referencing pending item counts achieves nearly the same utility with zero latency.
+- **Fallback Strategy**: LLMs can stall, hit rate limits, or lose network connectivity. Wrapping every external call in an 8-second `AbortController` ensures that if a provider stalls, the server immediately returns deterministic rule-based results (`degraded: true`). The UI surfaces a subtle notification rather than showing an error screen.
+- **What to improve next**: With additional time, we would move from keyword-based chunk scoring to dense vector embeddings using `pgvector`, add WebSocket streams for real-time queue synchronization across operators, and connect the Approve/Reject actions to an event bus or backend database.
 
 ---
 
-## 5. Quickstart & Installation
+## 4. Assistant Actions & Fallbacks
+
+| Action | Trigger | LLM Behavior | Graceful Fallback (Timeout / Error) |
+| :--- | :--- | :--- | :--- |
+| **Present me Summary** | "Present me Summary" Card | Structured JSON analyzing risk and ranking items by urgency score. | Rule-based sorting prioritizing videos/sensors with canned action advice. |
+| **Talk to me** | "Talk to me" Card | Multi-turn streaming conversation over queue items and priority questions. | Contextual summary message with standard recommended next steps. |
+| **Help me** | "Help me" Card | Q&A grounded strictly in policy documentation; returns section citations. | Direct excerpt retrieval from matching `approvalPolicy.md` sections. |
+| **Teach me** | "Teach me" Card | Interactive 4-step walkthrough for reviewing approvals; adapts to questions. | 4-step SOP guide with checklist requirements. |
+| **Replay Greeting** | Refresh Icon in Header | Brief dynamic greeting reflecting pending item counts and high-priority items. | Canned template referencing total and high-priority item counts. |
+
+---
+
+## 5. Getting Started
 
 ### Prerequisites
-- Node.js `v18+` or `v20+` (tested on Node v24).
+- Node.js `v18+` or `v20+` (tested on Node v22).
 - npm `v9+` or `v10+`.
 
-### 1. Clone & Install Dependencies
+### 1. Installation
 ```bash
-git clone <your-repo-url>
-cd Assessment
+git clone <repository-url>
+cd oomnieye-approvals-assistant
 npm install
 ```
-*(Husky hooks are automatically configured on install).*
 
-### 2. Configure Environment Variables (Optional)
-The project runs **out of the box in High-Fidelity Mock Mode** with zero configuration required. To connect live Google Gemini, OpenAI, or Anthropic keys:
+### 2. Environment Setup (Optional)
+The project runs **out of the box with local mock responses** if no API keys are provided. To connect a live LLM provider, create a `.env` file in `packages/server`:
+
 ```bash
 cp packages/server/.env.example packages/server/.env
 ```
-Edit `packages/server/.env`:
+
+Example configuration (`packages/server/.env`):
 ```env
 PORT=5000
 CLIENT_ORIGIN=http://localhost:3000
 
-# Select provider: "gemini" | "openai" | "anthropic" | "mock"
+# Provider options: "gemini" | "openai" | "anthropic" | "mock"
 LLM_PROVIDER=gemini
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-### 3. Run Development Servers
-From the root directory, start both Backend (Port 5000) and Frontend (Port 3000) with a single command:
+### 3. Running Locally
+Start both backend (port 5000) and frontend (port 3000) from the root:
 ```bash
 npm run dev
 ```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+
+Visit **[http://localhost:3000](http://localhost:3000)** in your browser.
 
 ---
 
-## 6. Automated Testing Verification (TDD)
+## 6. Testing
 
-Per the assignment specification, tests cover Unit, Integration (Supertest), and Component levels, specifically validating schema enforcement, token streaming, and 8-second timeout fallbacks.
+The project includes unit, integration, and component test suites:
 
-Run the entire monorepo test suite with one command:
 ```bash
+# Run all workspace tests
 npm test
+
+# Run individual suites
+npm run test:unit         # Server prompt and Zod schema tests
+npm run test:integration  # Express + Supertest endpoint tests
+npm run test:component    # Frontend Vitest + React Testing Library tests
 ```
 
-### Individual Test Suites:
-```bash
-# 1. Run Server Unit Tests (Prompt templates & Zod schema validation)
-npm run test:unit
-
-# 2. Run Server Integration Tests (Supertest endpoint & 8s timeout fallback)
-npm run test:integration
-
-# 3. Run Frontend Component Tests (Vitest + React Testing Library)
-npm run test:component
-```
-
-### Test Coverage Highlights:
-- **`prompts.test.ts`**: Verifies versioned prompt templates inject queue metadata, and verifies that `StructuredSummarySchema` strictly rejects malformed AI outputs, preventing silent LLM format errors.
-- **`llmServiceMock.test.ts`**: Verifies that forced 1ms timeouts trigger the `withTimeout` graceful degradation path without throwing unhandled exceptions.
-- **`assistant.api.test.ts` (Supertest)**: Verifies `GET /api/assistant/greeting`, `POST /api/assistant/summary` (Zod structured response), and `POST /api/assistant/chat` (SSE event-stream headers and chunks).
-- **`AssistantWidget.test.tsx` (RTL)**: Verifies initial render of the 4 cards, loading state spinner, token-by-token streaming, and visible error banner rendering.
+### Test Coverage Summary:
+- **`prompts.test.ts`**: Checks prompt builders, required variables, and verifies that `StructuredSummarySchema` rejects malformed JSON shapes.
+- **`llmServiceMock.test.ts`**: Verifies greeting generation, structured summaries, and checks that a 1ms timeout triggers the graceful fallback path cleanly.
+- **`assistant.api.test.ts`**: Tests `GET /api/approvals`, `GET /api/assistant/greeting`, `POST /api/assistant/summary`, and SSE streaming via `POST /api/assistant/chat`.
+- **`AssistantWidget.test.tsx`**: Tests initial widget rendering, loading states during summary generation, token streaming, and fallback notices on error.
 
 ---
 
-## 7. Code Quality & Production Standards
+## 7. Project Structure
 
-- **Strict TypeScript**: `"strict": true`, `"noImplicitAny": true`, `"noUnusedParameters": true` across all packages.
-- **Shared Contracts (`packages/shared`)**: Single source of truth for Zod contracts and inferred types.
-- **Global Error Handling**: Custom `AppError` hierarchy (`ValidationError`, `TimeoutError`, `RateLimitExceededError`, `LLMServiceError`) with clean JSON serialization.
-- **Rate Limiting**: `express-rate-limit` configured on all `/api/assistant/*` endpoints.
-- **Husky & Git Automation**:
-  - `pre-commit`: Runs `lint-staged` with Prettier formatting and `tsc --noEmit`.
-  - `commit-msg`: Validates conventional commit standard.
-  - `pre-push`: Runs automated test suite.
-
----
-
-## 8. AI-Augmented Workflow & Tool Usage
-
-Per the Take-Home logistics guidance (§7), modern engineering pairs human judgment with AI acceleration:
-- **Architecture & Schema Design**: Used AI assistants to draft and stress-test initial Zod contract boundaries between client and server, ensuring strict type-safety across SSE event boundaries.
-- **Adversarial Test Generation**: Formulated edge-case test payloads (e.g. malformed LLM responses with missing counts, microsecond timeouts triggering `AbortController`, and invalid action enums) to verify our graceful degradation guarantees.
-- **RAG Policy & Prompt Engineering**: Crafted versioned system prompts (`/prompts/*.ts`) and chunking boundaries for `approvalPolicy.md` to ensure zero hallucinations and deterministic policy citations.
-- **Full Review & Verification**: Every line of code, test case, and configuration was human-reviewed, audited for TypeScript strictness, and executed locally across all workspaces.
+```
+oomnieye-approvals-assistant/
+├── packages/
+│   ├── shared/                      # Shared types & Zod schemas
+│   │   ├── src/contracts/           # approvals, chat, and summary schemas
+│   │   └── src/index.ts
+│   │
+│   ├── server/                      # Express backend
+│   │   ├── src/controllers/         # approvals and assistant route controllers
+│   │   ├── src/data/                # approvalsQueue.json & approvalPolicy.md
+│   │   ├── src/middlewares/         # rate limiting & request validation
+│   │   ├── src/prompts/             # system & user prompt templates
+│   │   ├── src/routes/              # Express API route definitions
+│   │   ├── src/services/ai/         # LLM provider adapter & SSE streaming
+│   │   ├── src/services/rag/        # in-memory chunking & keyword search
+│   │   ├── src/utils/               # withTimeout utility
+│   │   └── tests/                   # unit and integration tests
+│   │
+│   └── client/                      # Next.js frontend
+│       ├── src/app/                 # App Router page & layout
+│       ├── src/components/assistant/# floating assistant widget components
+│       ├── src/components/dashboard/# approvals table and preview panels
+│       ├── src/services/            # api client for fetching & SSE streaming
+│       ├── src/store/               # Zustand assistant state store
+│       └── tests/                   # React Testing Library component tests
+│
+├── IMPLEMENTATION_PLAN.md           # Architecture and technical design notes
+└── README.md
+```

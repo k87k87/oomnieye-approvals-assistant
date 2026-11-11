@@ -3,21 +3,17 @@ import { ActionType, ChatMessage, StructuredSummary } from "@oomnieye/shared";
 import { ApiClient } from "../services/api.client";
 
 interface AssistantState {
-  // Widget Visibility & Active View
   isWidgetOpen: boolean;
   activeView: "cards" | "chat" | "summary";
   activeAction: ActionType | null;
 
-  // Greeting State
   greetingText: string;
   greetingDegraded: boolean;
   isGreetingLoading: boolean;
 
-  // Structured Summary State
   structuredSummary: StructuredSummary | null;
   isSummaryLoading: boolean;
 
-  // Chat & Streaming State
   messages: ChatMessage[];
   streamingTokenBuffer: string;
   isStreaming: boolean;
@@ -27,7 +23,6 @@ interface AssistantState {
   currentCitations: string[];
   operatorLanguage: string;
 
-  // Actions
   toggleWidget: (open?: boolean) => void;
   loadGreeting: () => Promise<void>;
   loadSummary: () => Promise<void>;
@@ -116,7 +111,6 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
       return;
     }
 
-    // Switch to Chat View
     set({
       activeView: "chat",
       activeAction: action,

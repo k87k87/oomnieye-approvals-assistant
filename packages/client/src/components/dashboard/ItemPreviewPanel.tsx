@@ -71,12 +71,11 @@ export const ItemPreviewPanel: React.FC<ItemPreviewPanelProps> = ({ item }) => {
           <span className="text-[10px] text-slate-400 font-mono">1920x1080 @ 60FPS</span>
         </div>
 
-        {/* Mock Digital-Twin Overlay Box */}
+        {/* Preview viewport overlay */}
         <div className="relative flex-1 min-h-[220px] bg-slate-900 rounded-lg overflow-hidden border border-slate-700 flex items-center justify-center">
-          {/* Subtle Grid Lines */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:24px_24px] opacity-40"></div>
 
-          {/* Bounding Box Overlay matching screenshot */}
+          {/* Spatial target bounding box */}
           <div className="absolute inset-8 border-2 border-dashed border-purple-400/80 rounded-md bg-purple-500/10 flex flex-col justify-between p-3 pointer-events-none">
             <div className="flex justify-between items-center text-[10px] font-mono text-purple-300">
               <span className="bg-purple-900/80 px-1.5 py-0.5 rounded border border-purple-400/40">

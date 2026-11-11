@@ -115,9 +115,7 @@ export class RagService {
     }));
   }
 
-  /**
-   * Deterministic fallback when AI is unavailable, rate-limited, or query needs direct policy excerpt
-   */
+  // Fallback when LLM is unavailable or for direct policy excerpts
   public getDirectPolicyFallback(query: string): { answer: string; citations: string[] } {
     const relevant = this.retrieve(query, 2);
     // Only cite sections that actually matched
@@ -146,7 +144,7 @@ export class RagService {
       .join("\n\n");
 
     return {
-      answer: `*Policy Document Reference (Grounded Retrieval)*:\n\n${answer}`,
+      answer: `### Relevant Policy Excerpts:\n\n${answer}`,
       citations,
     };
   }

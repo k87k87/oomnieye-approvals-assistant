@@ -60,7 +60,6 @@ export const ApprovalsTable: React.FC<ApprovalsTableProps> = ({
                     isSelected ? "bg-purple-50/50 hover:bg-purple-50/70" : "hover:bg-slate-50/80"
                   }`}
                 >
-                  {/* Name with Icon and Subtitle */}
                   <td className="py-3.5 px-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 shadow-xs border border-slate-200/60">
@@ -85,16 +84,10 @@ export const ApprovalsTable: React.FC<ApprovalsTableProps> = ({
                     </div>
                   </td>
 
-                  {/* Type */}
                   <td className="py-3.5 px-4 font-medium text-slate-600">{item.type}</td>
-
-                  {/* Submitted By */}
                   <td className="py-3.5 px-4 font-medium text-slate-700">{item.submittedBy}</td>
-
-                  {/* Date */}
                   <td className="py-3.5 px-4 text-slate-500">{item.date}</td>
 
-                  {/* Status Badge */}
                   <td className="py-3.5 px-4">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
@@ -116,7 +109,6 @@ export const ApprovalsTable: React.FC<ApprovalsTableProps> = ({
                     </span>
                   </td>
 
-                  {/* Actions */}
                   <td className="py-3.5 px-4 text-right">
                     <button
                       onClick={(e) => {

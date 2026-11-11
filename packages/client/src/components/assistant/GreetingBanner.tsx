@@ -56,7 +56,7 @@ export const GreetingBanner: React.FC = () => {
           <p className="text-slate-600 mt-1 leading-relaxed text-[11.5px]">
             {isGreetingLoading ? (
               <span className="text-slate-400 italic animate-pulse">
-                Consulting pending queue telemetry...
+                Checking queue status...
               </span>
             ) : (
               greetingText

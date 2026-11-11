@@ -5,7 +5,7 @@ import { AssistantWidget } from "../src/components/assistant/AssistantWidget";
 import { useAssistantStore } from "../src/store/useAssistantStore";
 import { ApiClient } from "../src/services/api.client";
 
-describe("Component Tests: Approvals Assistant Panel & Resilient UX States", () => {
+describe("<AssistantWidget />", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useAssistantStore.setState({
@@ -26,7 +26,7 @@ describe("Component Tests: Approvals Assistant Panel & Resilient UX States", () 
     });
   });
 
-  it("should render avatar/header, replay greeting button, and 4 action cards on initial state", () => {
+  it("renders header, replay greeting button, and action cards initially", () => {
     render(<AssistantWidget />);
 
     expect(screen.getByText("Approvals Assistant")).toBeInTheDocument();
@@ -37,8 +37,7 @@ describe("Component Tests: Approvals Assistant Panel & Resilient UX States", () 
     expect(screen.getByText("Teach me")).toBeInTheDocument();
   });
 
-  it("should visibly handle loading state when Present me Summary is clicked", async () => {
-    // Mock getSummary to delay response
+  it("shows loading indicator when summary action is triggered", async () => {
     vi.spyOn(ApiClient, "getSummary").mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -71,10 +70,8 @@ describe("Component Tests: Approvals Assistant Panel & Resilient UX States", () 
     const summaryCard = screen.getByText("Present me Summary");
     fireEvent.click(summaryCard);
 
-    // Verify loading state is visibly shown
     expect(screen.getByText("Synthesizing approvals telemetry...")).toBeInTheDocument();
 
-    // Verify structured output arrives and renders urgency badges
     await waitFor(() => {
       expect(screen.getByText("HIGH URGENCY")).toBeInTheDocument();
       expect(screen.getByText("Level 2 Drone Patrol Video Demo")).toBeInTheDocument();
@@ -82,7 +79,7 @@ describe("Component Tests: Approvals Assistant Panel & Resilient UX States", () 
     });
   });
 
-  it("should render token-by-token streaming state without freezing", async () => {
+  it("renders streamed tokens into chat feed", async () => {
     vi.spyOn(ApiClient, "streamAssistantAction").mockImplementation(
       async ({ onToken, onComplete }) => {
         onToken("Drone ");
@@ -102,7 +99,7 @@ describe("Component Tests: Approvals Assistant Panel & Resilient UX States", () 
     });
   });
 
-  it("should render graceful error / degraded state visibly when stream or timeout fails", async () => {
+  it("displays fallback notice when stream encounters an error or timeout", async () => {
     vi.spyOn(ApiClient, "streamAssistantAction").mockImplementation(async ({ onError }) => {
       onError(new Error("AI operation exceeded 8s timeout threshold"));
     });

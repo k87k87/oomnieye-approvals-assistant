@@ -4,10 +4,8 @@ import { llmService } from "../services/ai/llm.service";
 import { ChatRequest, SummaryResponseSchema, GreetingResponseSchema } from "@oomnieye/shared";
 
 export class AssistantController {
-  /**
-   * Action 5: Replay Greeting (context-aware dynamic greeting)
-   */
-  public async getGreeting(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Returns a fresh greeting referencing current pending queue state
+  public getGreeting = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const pendingItems = approvalService.getPendingItems();
       const result = await llmService.generateGreeting(pendingItems);
@@ -25,12 +23,10 @@ export class AssistantController {
     } catch (err) {
       next(err);
     }
-  }
+  };
 
-  /**
-   * Action 1: Present me Summary (structured JSON output validated with Zod)
-   */
-  public async getSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Generates executive summary and prioritized items
+  public getSummary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const language = (req.body?.language as string) || "en";
       const pendingItems = approvalService.getPendingItems();
@@ -45,12 +41,10 @@ export class AssistantController {
     } catch (err) {
       next(err);
     }
-  }
+  };
 
-  /**
-   * Streaming actions: Talk to me, Help me, Teach me
-   */
-  public async streamChat(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // SSE stream handler for chat, policy Q&A, and onboarding walkthrough
+  public streamChat = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const payload = req.body as ChatRequest;
       const { action, message, history, language } = payload;
@@ -83,7 +77,7 @@ export class AssistantController {
     } catch (err) {
       next(err);
     }
-  }
+  };
 }
 
 export const assistantController = new AssistantController();

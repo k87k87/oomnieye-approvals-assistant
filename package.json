@@ -1,7 +1,7 @@
 {
   "name": "oomnieye-approvals-assistant-monorepo",
   "version": "1.0.0",
-  "description": "OomniEye Digital Twin Approvals AI Assistant - Take-home technical assignment",
+  "description": "OomniEye Approvals Assistant - Command centre workflow copilot panel",
   "private": true,
   "workspaces": [
     "packages/*"

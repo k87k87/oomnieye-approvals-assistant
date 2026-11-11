@@ -36,13 +36,13 @@ export const ChatStreamView: React.FC = () => {
   const getActionTitle = () => {
     switch (activeAction) {
       case "talk":
-        return "Talk to me · Conversational Reasoning";
+        return "Talk to me";
       case "help":
-        return "Help me · Grounded Policy Assistant";
+        return "Help me · Policy Search";
       case "teach":
-        return "Teach me · Operator Training Walkthrough";
+        return "Teach me · Review SOP";
       default:
-        return "AI Approvals Assistant";
+        return "Approvals Assistant";
     }
   };
 

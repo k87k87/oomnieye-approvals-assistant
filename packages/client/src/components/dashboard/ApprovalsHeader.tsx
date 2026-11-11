@@ -18,9 +18,7 @@ export const ApprovalsHeader: React.FC<ApprovalsHeaderProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      {/* Top Action Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Back Link & Title */}
         <div className="flex items-center space-x-3">
           <button className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors">
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -33,7 +31,6 @@ export const ApprovalsHeader: React.FC<ApprovalsHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right Search & Add Help Button */}
         <div className="flex items-center space-x-3">
           <div className="relative w-72 sm:w-80">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -53,7 +50,6 @@ export const ApprovalsHeader: React.FC<ApprovalsHeaderProps> = ({
         </div>
       </div>
 
-      {/* View Subheader & Toggle Pills */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-3">
         <div className="flex items-center space-x-2">
           <span className="text-xs font-bold tracking-wider uppercase text-slate-500">
@@ -64,7 +60,6 @@ export const ApprovalsHeader: React.FC<ApprovalsHeaderProps> = ({
           </span>
         </div>
 
-        {/* View Mode Switcher */}
         <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
           <button
             onClick={() => onViewModeChange("queue")}

@@ -7,7 +7,7 @@ import {
 } from "../../src/prompts";
 import { StructuredSummarySchema, ApprovalItem } from "@oomnieye/shared";
 
-describe("Unit Tests: Versioned Prompts & Response Validation", () => {
+describe("prompts and schema validation", () => {
   const mockItems: ApprovalItem[] = [
     {
       id: "test-001",
@@ -29,14 +29,14 @@ describe("Unit Tests: Versioned Prompts & Response Validation", () => {
     },
   ];
 
-  it("GREETING_PROMPT_V1 should inject pending count and urgent items into system prompt", () => {
+  it("injects pending count and urgent items into greeting prompt", () => {
     const prompt = GREETING_PROMPT_V1.buildSystemPrompt(mockItems);
     expect(prompt).toContain("Total pending approval requests: 2");
     expect(prompt).toContain("Critical/Urgent items: 2");
     expect(prompt).toContain("Level 2 Drone Patrol Video Demo");
   });
 
-  it("SUMMARY_PROMPT_V1 should require strict JSON and contain operator language", () => {
+  it("builds summary prompt with required schema keys and target language", () => {
     const systemPrompt = SUMMARY_PROMPT_V1.buildSystemPrompt("es");
     expect(systemPrompt).toContain('specified language: "es"');
     expect(systemPrompt).toContain("prioritizedItems");
@@ -47,13 +47,13 @@ describe("Unit Tests: Versioned Prompts & Response Validation", () => {
     expect(userPrompt).toContain("Level 2 Drone Patrol Video Demo");
   });
 
-  it("TALK_PROMPT_V1 should serialize items into operational context", () => {
+  it("serializes queue items into talk context", () => {
     const prompt = TALK_PROMPT_V1.buildSystemPrompt(mockItems, "en");
     expect(prompt).toContain("test-001");
     expect(prompt).toContain("Alex HelpAdmin");
   });
 
-  it("RAG_HELP_PROMPT_V1 should include source citations and hallucination guardrail", () => {
+  it("includes citations and policy boundaries in help prompt", () => {
     const prompt = RAG_HELP_PROMPT_V1.buildSystemPrompt([
       {
         sectionTitle: "Section 1: Drone Patrol Video Approvals",
@@ -66,7 +66,7 @@ describe("Unit Tests: Versioned Prompts & Response Validation", () => {
     expect(prompt).toContain("escalate to the Shift Supervisor");
   });
 
-  it("StructuredSummarySchema should validate conforming JSON from LLM", () => {
+  it("validates conforming structured summary payload", () => {
     const validLlmOutput = {
       overview: "Queue analyzed: 2 urgent safety items detected.",
       totalPending: 2,
@@ -89,14 +89,13 @@ describe("Unit Tests: Versioned Prompts & Response Validation", () => {
     expect(parsed.prioritizedItems[0]?.urgency).toBe("HIGH");
   });
 
-  it("StructuredSummarySchema should reject broken AI response shapes (catches silent LLM failures)", () => {
+  it("rejects malformed summary payload missing required fields", () => {
     const brokenLlmOutput = {
       overview: "Malformed output",
-      // missing totalPending and highPriorityCount
       prioritizedItems: [
         {
           itemId: "test-001",
-          urgency: "SUPER_URGENT", // invalid enum value
+          urgency: "SUPER_URGENT",
         },
       ],
     };

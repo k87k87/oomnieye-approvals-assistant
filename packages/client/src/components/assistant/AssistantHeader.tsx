@@ -21,7 +21,7 @@ export const AssistantHeader: React.FC<AssistantHeaderProps> = ({ onClose }) => 
             <span className="font-bold text-xs tracking-wide">Approvals Assistant</span>
             <span className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-950/80 animate-pulse"></span>
           </div>
-          <p className="text-[10px] text-slate-300">Live Decision & Policy Engine</p>
+          <p className="text-[10px] text-slate-300">Approvals & Policy Copilot</p>
         </div>
       </div>
 
@@ -36,7 +36,7 @@ export const AssistantHeader: React.FC<AssistantHeaderProps> = ({ onClose }) => 
             loadGreeting();
           }}
           disabled={isGreetingLoading}
-          title="Replay Greeting (Context-Aware Regeneration)"
+          title="Replay Greeting"
           className="flex items-center space-x-1 px-2 py-1 text-[11px] font-medium text-slate-200 bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-md transition-all border border-white/10 disabled:opacity-50"
         >
           <RotateCw

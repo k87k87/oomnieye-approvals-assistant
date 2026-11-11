@@ -39,3 +39,4 @@ Thumbs.db
 # Temporary & artifacts
 scratch/
 .system_generated/
+*.tsbuildinfo

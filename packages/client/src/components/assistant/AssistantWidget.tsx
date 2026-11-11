@@ -12,7 +12,6 @@ import { ChatStreamView } from "./ChatStreamView";
 export const AssistantWidget: React.FC = () => {
   const { isWidgetOpen, toggleWidget, activeView, loadGreeting } = useAssistantStore();
 
-  // Load context-aware dynamic greeting on initial mount
   useEffect(() => {
     loadGreeting();
   }, [loadGreeting]);
@@ -36,10 +35,8 @@ export const AssistantWidget: React.FC = () => {
 
   return (
     <div className="fixed bottom-6 right-6 z-40 w-[92vw] sm:w-[440px] bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden flex flex-col transition-all">
-      {/* Top Header */}
       <AssistantHeader onClose={() => toggleWidget(false)} />
 
-      {/* Main Panel Content Area */}
       <div className="flex-1 bg-white">
         {activeView === "cards" && (
           <>

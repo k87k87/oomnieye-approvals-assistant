@@ -1,20 +1,16 @@
 import { ApprovalItem } from "@oomnieye/shared";
 
 export const SUMMARY_PROMPT_V1 = {
-  version: "v1.0.0",
-  name: "present-summary",
-  description:
-    "Produces a structured urgency ranking and synthesis of pending approvals as strict JSON",
+  version: "1.0.0",
+  name: "summary",
+  description: "Produces a structured urgency ranking and synthesis of pending approvals as strict JSON",
   buildSystemPrompt: (language: string = "en"): string => {
-    return `You are the Senior Safety & Approvals Operations AI for the OomniEye Digital Twin Command Centre.
-Your responsibility is to analyze the current queue of pending approvals, prioritize items based on operational risk, safety compliance, and urgency, and output a structured JSON analysis.
+    return `You are the approvals review assistant for the OomniEye command centre.
+Analyze the pending queue items, determine urgency based on operational safety criteria, and respond in the operator's specified language: "${language}".
 
-Respond in the operator's specified language: "${language}".
-
-CRITICAL REQUIREMENTS:
-1. You MUST respond with ONLY a valid JSON object adhering strictly to this schema:
+Respond ONLY with a valid JSON object matching this structure:
 {
-  "overview": "Brief high-level summary of the pending queue status",
+  "overview": "Brief summary of the pending queue",
   "totalPending": <number>,
   "highPriorityCount": <number>,
   "prioritizedItems": [
@@ -22,20 +18,20 @@ CRITICAL REQUIREMENTS:
       "itemId": "ID of the item",
       "itemName": "Name of the item",
       "urgency": "HIGH" | "MEDIUM" | "LOW",
-      "reason": "Operational justification for why this priority was assigned",
-      "recommendedAction": "Immediate step the operator should execute"
+      "reason": "Operational reason for this priority",
+      "recommendedAction": "Next action the technician should take"
     }
   ],
-  "topRecommendation": "Primary immediate action the operator must take right now"
+  "topRecommendation": "Primary action the operator should address first"
 }
 
-Prioritization Rules:
-- Only consider, prioritize, and count items that are actively PENDING review. Completely exclude any item that is already "Completed", "Approved", or "Rejected" from totalPending and prioritizedItems.
-- Drone flight videos ("Level 2 Drone Patrol Video Demo") and safety hardware specs ("Safety Equipment & Sensor Specs") are HIGH urgency due to physical perimeter safety and hazard compliance if pending.
-- Spatial zone camera maps ("360° Spatial Zone Layout & Camera Map") are MEDIUM urgency (needed for shift transitions).
-- Onboarding & general checklists ("Site Patrol Onboarding & Checklists") are LOW/MEDIUM urgency.
+Prioritization guidelines:
+- Only evaluate items that are currently pending. Exclude any completed, approved, or rejected items from totalPending and prioritizedItems.
+- Drone patrol videos ("Level 2 Drone Patrol Video Demo") and sensor specifications ("Safety Equipment & Sensor Specs") are HIGH urgency due to flight boundary safety and calibration compliance.
+- Spatial zone camera layouts ("360° Spatial Zone Layout & Camera Map") are MEDIUM urgency.
+- Standard checklists and onboarding docs ("Site Patrol Onboarding & Checklists") are LOW to MEDIUM urgency.
 
-Output pure JSON only. Do not add markdown backticks, explanations, or text outside the JSON.`;
+Output raw JSON only without markdown formatting or backticks.`;
   },
   buildUserPrompt: (items: ApprovalItem[]): string => {
     return `Analyze and prioritize the following approval queue items:\n\n${JSON.stringify(items, null, 2)}`;

@@ -3,17 +3,14 @@ export interface TimeoutOptions {
   operationName?: string;
 }
 
-/**
- * Wraps an asynchronous operation with an 8-second AbortController timeout
- * and provides a non-500 graceful degradation fallback on timeout or failure.
- */
+// Runs an async task with an AbortSignal timeout and falls back to a default value if it fails or times out
 export async function withTimeout<T>(
   operation: (signal: AbortSignal) => Promise<T>,
   fallback: (error: Error) => Promise<T> | T,
   options: TimeoutOptions = {},
 ): Promise<T> {
   const timeoutMs = options.timeoutMs ?? 8000;
-  const operationName = options.operationName ?? "AI Operation";
+  const operationName = options.operationName ?? "Operation";
   const controller = new AbortController();
 
   let timer: NodeJS.Timeout | null = null;
@@ -35,9 +32,7 @@ export async function withTimeout<T>(
   } catch (err) {
     if (timer) clearTimeout(timer);
     const error = err instanceof Error ? err : new Error(String(err));
-    console.warn(
-      `[Graceful Degradation] ${operationName} failed/timed out: "${error.message}". Executing fallback.`,
-    );
+    console.warn(`[withTimeout] ${operationName} failed or timed out (${error.message}). Using fallback.`);
     return await fallback(error);
   }
 }

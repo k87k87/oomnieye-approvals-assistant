@@ -95,7 +95,7 @@ export default function ApprovalsPage() {
         {isLoading && (
           <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] text-slate-500 space-y-2">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <p className="text-xs font-medium">Connecting to Digital Twin Approvals Service...</p>
+            <p className="text-xs font-medium">Loading approvals queue...</p>
           </div>
         )}
 
@@ -103,7 +103,7 @@ export default function ApprovalsPage() {
           <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center space-x-3">
             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
             <div className="flex-1">
-              <span className="font-bold">Offline / Fallback Notice: </span>
+              <span className="font-bold">Offline notice: </span>
               {loadError}
             </div>
             <button
@@ -115,10 +115,9 @@ export default function ApprovalsPage() {
           </div>
         )}
 
-        {/* Main Content Split: Approvals Table (Left) + Selected Item Telemetry Preview (Right) */}
+        {/* Approvals table and preview */}
         {!isLoading && (
           <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-start">
-            {/* Approvals Table */}
             <div className="lg:col-span-7 xl:col-span-8">
               <ApprovalsTable
                 items={filteredItems}
@@ -127,7 +126,6 @@ export default function ApprovalsPage() {
               />
             </div>
 
-            {/* Split Preview Panel */}
             <div className="lg:col-span-5 xl:col-span-4">
               <ItemPreviewPanel item={selectedItem} />
             </div>
@@ -135,10 +133,9 @@ export default function ApprovalsPage() {
         )}
       </main>
 
-      {/* System Footer Bar */}
       <DashboardFooter />
 
-      {/* Target UI: AI Approvals Assistant Panel (Floating in Lower Right) */}
+      {/* Floating approvals assistant */}
       <AssistantWidget />
     </div>
   );

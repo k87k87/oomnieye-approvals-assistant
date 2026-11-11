@@ -51,7 +51,7 @@ export const StructuredSummaryView: React.FC = () => {
           Synthesizing approvals telemetry...
         </div>
         <p className="text-[11px] text-slate-500 max-w-xs">
-          Validating structured JSON schemas and calculating urgency ratings.
+          Checking queue urgency and safety compliance guidelines...
         </p>
       </div>
     );

@@ -3,8 +3,8 @@ import request from "supertest";
 import { app } from "../../src/app";
 import { approvalService } from "../../src/services/approval/approval.service";
 
-describe("Integration Tests (Supertest): AI Assistant Endpoints & Fallback Resilience", () => {
-  it("GET /api/approvals should return 200 with seeded queue items", async () => {
+describe("assistant API endpoints", () => {
+  it("GET /api/approvals returns 200 and seeded queue items", async () => {
     const res = await request(app).get("/api/approvals");
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -13,7 +13,7 @@ describe("Integration Tests (Supertest): AI Assistant Endpoints & Fallback Resil
     expect(res.body.items[0].name).toBe("Site Patrol Onboarding & Checklists");
   });
 
-  it("GET /api/assistant/greeting should return 200 with dynamic context-aware greeting", async () => {
+  it("GET /api/assistant/greeting returns 200 and greeting object", async () => {
     const res = await request(app).get("/api/assistant/greeting");
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -21,7 +21,7 @@ describe("Integration Tests (Supertest): AI Assistant Endpoints & Fallback Resil
     expect(res.body.data.pendingCount).toBe(approvalService.getPendingItems().length);
   });
 
-  it("POST /api/assistant/summary (Success Path) should return 200 with Zod-validated structured JSON", async () => {
+  it("POST /api/assistant/summary returns 200 and validated structured summary", async () => {
     const res = await request(app)
       .post("/api/assistant/summary")
       .send({ language: "en" })
@@ -35,7 +35,7 @@ describe("Integration Tests (Supertest): AI Assistant Endpoints & Fallback Resil
     expect(res.body.data.topRecommendation).toBeDefined();
   });
 
-  it("POST /api/assistant/chat with invalid body should return 400 with validation error details", async () => {
+  it("POST /api/assistant/chat returns 400 when payload is invalid", async () => {
     const res = await request(app)
       .post("/api/assistant/chat")
       .send({ action: "invalid_action_name" })
@@ -47,7 +47,7 @@ describe("Integration Tests (Supertest): AI Assistant Endpoints & Fallback Resil
     expect(res.body.error.details).toBeDefined();
   });
 
-  it("POST /api/assistant/chat (talk action) should return SSE stream with event-stream headers", async () => {
+  it("POST /api/assistant/chat streams SSE response for talk action", async () => {
     const res = await request(app)
       .post("/api/assistant/chat")
       .send({
@@ -62,7 +62,7 @@ describe("Integration Tests (Supertest): AI Assistant Endpoints & Fallback Resil
     expect(res.text).toContain("[DONE]");
   });
 
-  it("POST /api/assistant/chat (help action with RAG grounding) should return grounded policy response", async () => {
+  it("POST /api/assistant/chat returns grounded policy citations for help action", async () => {
     const res = await request(app)
       .post("/api/assistant/chat")
       .send({

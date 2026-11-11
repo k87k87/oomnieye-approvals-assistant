@@ -6,15 +6,9 @@ import { ChatRequestSchema } from "@oomnieye/shared";
 
 export const assistantRouter = Router();
 
-// Apply per-session / IP rate limiting to all AI assistant routes
+// Throttle assistant endpoints per IP/session
 assistantRouter.use(aiRateLimiter);
 
-assistantRouter.get("/greeting", (req, res, next) =>
-  assistantController.getGreeting(req, res, next),
-);
-assistantRouter.post("/summary", (req, res, next) =>
-  assistantController.getSummary(req, res, next),
-);
-assistantRouter.post("/chat", validateBody(ChatRequestSchema), (req, res, next) =>
-  assistantController.streamChat(req, res, next),
-);
+assistantRouter.get("/greeting", assistantController.getGreeting);
+assistantRouter.post("/summary", assistantController.getSummary);
+assistantRouter.post("/chat", validateBody(ChatRequestSchema), assistantController.streamChat);
